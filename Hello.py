@@ -72,11 +72,11 @@ for i in range(1,15):
 lock=threading.Lock()
 xunproxy()
 while not que.empty():
-    requestss=threadpool.makeRequests(kuaidaili,[([que.get(),None],None),([lock,None],None)])
+    requestss=threadpool.makeRequests(kuaidaili,((que.get()),(lock)))
     [pool.putRequest(req) for req in requestss]
-for i in proxy:
-    requestss=threadpool.makeRequests(validate,[([i,None],None),([lock,None],None)])
-    [pool.putRequest(req) for req in requestss]
+# for i in proxy:
+#     requestss=threadpool.makeRequests(validate,([i,lock]))
+#     [pool.putRequest(req) for req in requestss]
 
 pool.wait()
 print(proxyok)
