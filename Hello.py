@@ -22,7 +22,10 @@ def xunproxy():
         proxy.add(j["ip"]+":"+j["port"])
 
 #快代理
-def kuaidaili(url,lock):
+def kuaidaili(que,lock):
+    url=""
+    if not que.empty():
+        url=que.get()
     time.sleep(1)
     headers={}
     headers["User-Agent"]="Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36"
@@ -71,9 +74,9 @@ for i in range(1,15):
     que.put("http://www.kuaidaili.com/free/inha/"+str(i)+"/")
 lock=threading.Lock()
 xunproxy()
-while not que.empty():
-    requestss=threadpool.makeRequests(kuaidaili,((que.get()),(lock)))
-    [pool.putRequest(req) for req in requestss]
+
+requestss=threadpool.makeRequests(kuaidaili,((que.get()),(lock)))
+[pool.putRequest(req) for req in requestss]
 # for i in proxy:
 #     requestss=threadpool.makeRequests(validate,([i,lock]))
 #     [pool.putRequest(req) for req in requestss]
