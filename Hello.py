@@ -22,10 +22,7 @@ def xunproxy():
         proxy.add(j["ip"]+":"+j["port"])
 
 #快代理
-def kuaidaili(que,lock):
-    url=""
-    if not que.empty():
-        url=que.get()
+def kuaidaili(url,lock):
     time.sleep(1)
     headers={}
     headers["User-Agent"]="Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36"
@@ -43,13 +40,17 @@ def kuaidaili(que,lock):
             try:
                 lock.acquire()
                 proxy.add(ipinfo)
+                print("添加代理成功",ipinfo)
                 lock.release()
             except:
                 print("代理添加失败！",i)
 
 proxyok=set()
 #验证代理是否OK
-def validate(i,lock):
+def validate(que,lock):
+    url=""
+    if not que.empty():
+        url=que.get()
     proxies={"http": "http://"+i}
     testurl="https://www.baidu.com/"
     try:
@@ -75,11 +76,11 @@ for i in range(1,15):
 lock=threading.Lock()
 xunproxy()
 
-requestss=threadpool.makeRequests(kuaidaili,((que.get()),(lock)))
+requestss=threadpool.makeRequests(kuaidaili,[([que,lock],None)])
 [pool.putRequest(req) for req in requestss]
-# for i in proxy:
-#     requestss=threadpool.makeRequests(validate,([i,lock]))
-#     [pool.putRequest(req) for req in requestss]
+
+# requestss=threadpool.makeRequests(validate,[([i,lock],None) for i in proxy])
+# [pool.putRequest(req) for req in requestss]
 
 pool.wait()
 print(proxyok)
