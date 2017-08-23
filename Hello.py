@@ -1,7 +1,6 @@
 import requests, time
 import json
 from bs4 import BeautifulSoup as bs
-import threadpool
 import queue
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -28,7 +27,6 @@ def xunproxy():
 def kuaidaili(que, lock):
     while not que.empty():
         url=que.get()
-        print(url)
         time.sleep(5)
         headers = {}
         headers[
@@ -41,6 +39,7 @@ def kuaidaili(que, lock):
             soup = bs(resp.text, "lxml")
             tbody = soup.find("tbody")
             tr = tbody.find_all("tr")
+            print(que.qsize(),len(tr),url)
             for j in tr:
                 td = j.find_all("td")
                 ipinfo = td[0].get_text() + ":" + td[1].get_text()
@@ -56,38 +55,53 @@ def kuaidaili(que, lock):
 proxyok = set()
 
 # 验证代理是否OK
-def validate(i, lock):
-    proxies = {"http": "http://" + i}
-    testurl = "https://www.baidu.com/"
-    try:
-        resp = requests.get(url=testurl, proxies=proxies, timeout=3)
-        if resp.status_code == 200:
-            print("该代理存活", i)
-            try:
-                lock.acquire()
-                proxyok.add(i)
-                lock.release()
-            except:
-                print("代理添加失败！", i)
-        else:
-            print("该代理失效", i, resp.status_code)
-    except:
-        print("该代理失效", i)
+def validate(proxy, lock):
+    while len(proxy)!=0:
+        lock.acquire()
+        i=proxy.pop()
+        lock.release()
+        proxies = {"http": "http://" + i}
+        testurl = "http://tieba.baidu.com/f?kw=%BD%AD%BA%BA%B4%F3%D1%A7&fr=ala0&tpl=5"
+        try:
+            resp = requests.get(url=testurl, proxies=proxies, timeout=3)
+            if resp.status_code == 200:
+                try:
+                    lock.acquire()
+                    proxyok.add(i)
+                    print("该代理存活,添加成功！", i, threading.current_thread().getName())
+                    lock.release()
+                except:
+                    print("代理添加失败！", i,threading.current_thread().getName())
+            else:
+                print("该代理失效", i, resp.status_code,threading.current_thread().getName())
+        except:
+            print("该代理失效", i,threading.current_thread().getName())
 
 
 que = queue.Queue()
-pool = threadpool.ThreadPool(20)
 # 向队列中添加
-for i in range(1, 15):
+for i in range(1, 16):
     que.put("http://www.kuaidaili.com/free/inha/" + str(i) + "/")
 lock = threading.Lock()
-xunproxy()
+#xunproxy()
 pool = ThreadPoolExecutor(max_workers=20)
 task1 = pool.submit(kuaidaili, *(que, lock))
 task2 = pool.submit(kuaidaili, *(que, lock))
 task3 = pool.submit(kuaidaili, *(que, lock))
-time.sleep(5)
-print(task1.done())
-print(task2.done())
-print(task3.done())
-print(proxy)
+
+while not (task1.done() and task2.done() and task3.done()):
+    pass
+
+print(len(proxy),"所有抓取线程都已经执行完毕")
+
+val1=pool.submit(validate,*(proxy,lock))
+val2=pool.submit(validate,*(proxy,lock))
+val3=pool.submit(validate,*(proxy,lock))
+val4=pool.submit(validate,*(proxy,lock))
+val5=pool.submit(validate,*(proxy,lock))
+
+while not (val1.done() and val2.done() and val3.done()and val4.done()and val5.done()):
+    pass
+print(len(proxyok),"所有线程都已经执行完毕")
+print(proxyok)
+
