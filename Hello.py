@@ -46,10 +46,11 @@ def kuaidaili(que, lock):
                 try:
                     lock.acquire()
                     proxy.add(ipinfo)
-                    print("添加代理成功", ipinfo, threading.current_thread().getName())
+                    #print("添加代理成功", ipinfo, threading.current_thread().getName())
                     lock.release()
                 except:
-                    print("代理添加失败！", i, threading.current_thread().getName())
+                    #print("代理添加失败！", i, threading.current_thread().getName())
+                    pass
 
 
 proxyok = set()
