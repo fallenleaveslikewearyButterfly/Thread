@@ -35,6 +35,10 @@ def kuaidaili(que, lock):
         headers["Referer"] = "http://www.kuaidaili.com/"
         resp = requests.get(url=url, headers=headers)
         resp.encoding = "utf-8"
+        for i in range(0,3):
+            if resp.status_code==503:
+                time.sleep(5)
+                resp=requests.get(url=url, headers=headers)
         if resp.status_code == 200:
             soup = bs(resp.text, "lxml")
             tbody = soup.find("tbody")
@@ -49,8 +53,7 @@ def kuaidaili(que, lock):
                     #print("添加代理成功", ipinfo, threading.current_thread().getName())
                     lock.release()
                 except:
-                    #print("代理添加失败！", i, threading.current_thread().getName())
-                    pass
+                    print("代理添加失败！", i, threading.current_thread().getName())
 
 
 proxyok = set()
@@ -84,7 +87,7 @@ que = queue.Queue()
 for i in range(1, 16):
     que.put("http://www.kuaidaili.com/free/inha/" + str(i) + "/")
 lock = threading.Lock()
-#xunproxy()
+xunproxy()
 pool = ThreadPoolExecutor(max_workers=20)
 task1 = pool.submit(kuaidaili, *(que, lock))
 task2 = pool.submit(kuaidaili, *(que, lock))
@@ -105,4 +108,3 @@ while not (val1.done() and val2.done() and val3.done()and val4.done()and val5.do
     pass
 print(len(proxyok),"所有线程都已经执行完毕")
 print(proxyok)
-
